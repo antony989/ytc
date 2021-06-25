@@ -238,7 +238,7 @@ func getComment(ctx context.Context, c *chromedp.Context, ev *network.EventRespo
 				Content:   contentTexts[k],
 				Thumbnail: thumbnails[k],
 				CreatedAt: commentDates[k],
-				UpdatedAt: commentDates[k],
+				UpdatedAt: time.Now(),
 				Replies:   replies[k],
 				VoteCount: voteCounts[k],
 			},
@@ -320,7 +320,7 @@ func repliesRequest(h network.Headers, xhrUrl, xsrf, video_id string, isReplies 
 					Content:        contentTexts[k],
 					Thumbnail:      thumbnails[k],
 					CreatedAt:      commentDates[k],
-					UpdatedAt:      commentDates[k],
+					UpdatedAt:      time.Now(),
 					VoteCount:      voteCounts[k],
 				},
 			)
