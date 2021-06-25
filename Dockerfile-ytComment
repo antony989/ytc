@@ -1,0 +1,6 @@
+FROM golang:alpine AS builder
+WORKDIR /go/src/app
+COPY . .
+RUN go mod download
+RUN cd cmd && go build -o yt .
+CMD ["./cmd/yt"]

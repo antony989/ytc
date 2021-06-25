@@ -1,0 +1,80 @@
+version: "3"
+
+services:
+  # Youtube 댓글 수집
+  postgres-db:
+    image: postgres:12.2-alpine
+    container_name: postgres-db
+    environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=youtube_db
+    ports: 
+      - 5432:5432
+    restart: always
+    networks:
+      - dev-network
+
+  chromedp:
+    image: chromedp/headless-shell
+    ports:
+      - 9222:9222
+    restart: always
+    networks:
+      - dev-network
+
+  message-broker:
+    image: rabbitmq:3-management-alpine
+    container_name: message-broker
+    ports:
+      - 5672:5672 # RabbitMQ connections
+      - 15672:15672 # RabbitMQ Web
+    volumes:
+      - ${HOME}/dev-rabbitmq/data/:/var/lib/rabbitmq
+      - ${HOME}/dev-rabbitmq/log/:/var/log/rabbitmq
+    restart: always
+    networks:
+      - dev-network
+
+  main-server:
+    container_name: main-server
+    ports:
+      - 9988:9988
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      AMQP_SERVER_URL: amqp://guest:guest@message-broker/
+    restart: always
+    networks:
+      - dev-network
+    depends_on:
+      - message-broker
+
+  yt-comment-crawler:
+    container_name: yt-comment-crawler
+    build:
+      context: .
+      dockerfile: Dockerfile-ytComment
+    environment:
+      AMQP_SERVER_URL: amqp://guest:guest@message-broker/
+      HOST: postgres-db
+      DBPORT: 5432
+      USERNAME: postgres
+      PASSWORD: postgres
+      DBNAME: youtube_db
+    restart: always
+    networks:
+      - dev-network
+    links:
+      - chromedp
+    depends_on:
+      - message-broker
+      - postgres-db
+      - main-server
+      - chromedp
+
+networks:
+  # Create Docker network
+  dev-network:
+    driver: bridge
