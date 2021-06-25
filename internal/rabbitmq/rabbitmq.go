@@ -94,6 +94,7 @@ func (c *Client) connect(addr string) bool {
 	}
 	ch.Confirm(false)
 
+	// durable true?
 	_, err = ch.QueueDeclare(c.Queue, false, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("rabbitMQ PUSH 대기열 선언 실패: %v", err)
@@ -189,7 +190,6 @@ func (c *Client) Stream(cancelCtx context.Context, db *gorm.DB) error {
 						connectionDropped = true
 						return
 					}
-					msg.Ack(false)
 					c.crawlerEvent(msg, db)
 				}
 			}
