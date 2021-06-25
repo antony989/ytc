@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 
 	"github.com/kurosaki/l1/internal/rabbitmq"
 	"github.com/labstack/echo/v4"
@@ -15,7 +16,6 @@ type Jobmodel struct {
 }
 
 var goChan chan os.Signal = make(chan os.Signal, 1)
-
 var amqpServerURL string = os.Getenv("AMQP_SERVER_URL")
 
 // var amqpServerURL string = "amqp://guest:guest@localhost:5672/"
@@ -33,19 +33,28 @@ func ResponseJob(c echo.Context) error {
 			"message": fmt.Sprintf("잘못된 URL 요청 입니다."),
 		})
 	} else {
-		err := client.Push([]byte(uri))
-		if err != nil {
-			fmt.Println(err)
+		uriRegex := regexp.MustCompile(`https.+?\.?v=([^\s"\'<>?&]+)`)
+		videoId := uriRegex.FindStringSubmatch(uri)[1]
+		if videoId != "" {
+			ytUrl := fmt.Sprintf("https://www.youtube.com/watch?v=%v", videoId)
+
+			err := client.Push([]byte(ytUrl))
+			if err != nil {
+				fmt.Println(err)
+			}
+			// conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+			// yt.HandlerError(err)
+			// ch, err := conn.Channel()
+			// yt.HandlerError(err)
+			return c.JSON(http.StatusOK, map[string]string{
+				"code":    "success",
+				"message": fmt.Sprintf("%v 크롤링 작업 추가 완료", u),
+			})
+		} else {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"code":    "fail",
+				"message": fmt.Sprintf("잘못된 URL 요청 입니다."),
+			})
 		}
-
-		// conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-		// yt.HandlerError(err)
-		// ch, err := conn.Channel()
-		// yt.HandlerError(err)
-
-		return c.JSON(http.StatusOK, map[string]string{
-			"code":    "success",
-			"message": fmt.Sprintf("%v 크롤링 작업 추가 완료", u),
-		})
 	}
 }
