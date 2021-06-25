@@ -52,7 +52,9 @@ func Run(db *gorm.DB, url string) {
 				go func() {
 					comment := getComment(ctx, chromedp.FromContext(ctx), ev, videoId)
 					for idx := range comment {
-						db.Create(&comment[idx])
+						if db.Model(&models.MainComment{}).Where("comment_id = ?", comment[idx].CommentId).Updates(&comment[idx]).RowsAffected == 0 {
+							db.Create(&comment[idx])
+						}
 					}
 				}()
 			}
@@ -66,7 +68,10 @@ func Run(db *gorm.DB, url string) {
 		chromedp.Sleep(time.Second*5),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			videoInfo := getVideoInfo(ctx, videoId)
-			db.Create(&videoInfo)
+			if db.Model(&models.Video{}).Where("video_id = ?", videoInfo.VideoID).Updates(&videoInfo).RowsAffected == 0 {
+				db.Create(&videoInfo)
+			}
+			// db.Create(&videoInfo)
 			return nil
 		}),
 	)
@@ -434,3 +439,28 @@ func timeStampChanger(timeDate string) time.Time {
 	}
 	return commentDate
 }
+
+// func timeStampChanger(timeDate string) time.Time {
+// 	fmt.Println(timeDate)
+// 	dateRegex := regexp.MustCompile(`([0-9]+)+(.+전)`)
+// 	commentTextdate := dateRegex.FindStringSubmatch(timeDate)
+// 	dateParser := commentTextdate[1]
+// 	dateString := commentTextdate[2]
+// 	dateInt, _ := strconv.Atoi(dateParser)
+// 	var commentDate time.Time
+// 	switch dateString {
+// 	case "분 전":
+// 		commentDate = time.Now().Add(time.Minute * time.Duration(-dateInt))
+// 	case "시간 전":
+// 		commentDate = time.Now().Add(time.Hour * time.Duration(-dateInt))
+// 	case "일 전":
+// 		commentDate = time.Now().Add((time.Hour * 24) * time.Duration(-dateInt))
+// 	case "주 전":
+// 		commentDate = time.Now().Add((time.Hour * 24 * 7) * time.Duration(-dateInt))
+// 	case "개월 전":
+// 		commentDate = time.Now().Add((time.Hour * 30 * 24) * time.Duration(-dateInt))
+// 	case "년 전":
+// 		commentDate = time.Now().Add((time.Hour * 24 * 365) * time.Duration(-dateInt))
+// 	}
+// 	return commentDate
+// }

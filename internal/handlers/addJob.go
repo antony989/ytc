@@ -15,7 +15,10 @@ type Jobmodel struct {
 }
 
 var goChan chan os.Signal = make(chan os.Signal, 1)
+
 var amqpServerURL string = os.Getenv("AMQP_SERVER_URL")
+
+// var amqpServerURL string = "amqp://guest:guest@localhost:5672/"
 var client *rabbitmq.Client = rabbitmq.New("crawler", amqpServerURL, goChan)
 
 func ResponseJob(c echo.Context) error {

@@ -20,6 +20,7 @@ func main() {
 	db.AutoMigrate(&CommentModel)
 	db.AutoMigrate(&replies)
 	amqpServerURL := os.Getenv("AMQP_SERVER_URL")
+	// amqpServerURL := "amqp://guest:guest@localhost:5672/"
 	var goChan chan os.Signal = make(chan os.Signal, 1)
 	var client *rabbitmq.Client = rabbitmq.New("crawler", amqpServerURL, goChan)
 
