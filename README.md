@@ -1,6 +1,6 @@
 # yt-comment crawler
 
-Yt Comment Crawler
+Youtube Video Info & Comment Crawler
 
 ## Install
 ```
