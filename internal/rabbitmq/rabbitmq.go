@@ -94,7 +94,7 @@ func (c *Client) connect(addr string) bool {
 	}
 	ch.Confirm(false)
 
-	_, err = ch.QueueDeclare(c.Queue, true, false, false, false, nil)
+	_, err = ch.QueueDeclare(c.Queue, false, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("rabbitMQ PUSH 대기열 선언 실패: %v", err)
 		return false
@@ -168,8 +168,8 @@ func (c *Client) Stream(cancelCtx context.Context, db *gorm.DB) error {
 	for i := 1; i <= c.threads; i++ {
 		msgs, err := c.channel.Consume(
 			c.Queue,
-			consumerName(i),
-			false,
+			"",
+			true,
 			false,
 			false,
 			false,
@@ -207,6 +207,6 @@ func (c *Client) crawlerEvent(msg amqp.Delivery, db *gorm.DB) {
 	// fmt.Println("소비됌")
 }
 
-func consumerName(i int) string {
-	return fmt.Sprintf("crawler-%v", i)
-}
+// func consumerName(i int) string {
+// 	return fmt.Sprintf("crawler-%v", i)
+// }
