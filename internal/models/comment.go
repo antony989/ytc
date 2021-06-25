@@ -11,7 +11,7 @@ type MainComment struct {
 	ID        int              `gorm:"primary_key;AUTO_INCREMENT;" json:"-"`
 	VideoId   string           `json:"video_id"`
 	ChannelId string           `json:"channel_id"`
-	CommentId string           `json:"comment_id"`
+	CommentId string           `gorm:"uniqueIndex:comment_id" json:"comment_id"`
 	UserName  string           `json:"username"`
 	Content   string           `json:"content"`
 	Thumbnail string           `json:"thumbnail"`
@@ -26,7 +26,7 @@ type RepliesComment struct {
 	ID             int       `gorm:"primary_key;AUTO_INCREMENT;" json:"-"`
 	VideoId        string    `json:"video_id"`
 	ChannelId      string    `json:"channel_id"`
-	ReplyCommentId string    `json:"reply_comment_id"`
+	ReplyCommentId string    `gorm:"uniqueIndex:reply_comment_id" json:"reply_comment_id"`
 	UserName       string    `json:"username"`
 	Content        string    `json:"content"`
 	Thumbnail      string    `json:"thumbnail"`
