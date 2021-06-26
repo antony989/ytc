@@ -95,7 +95,7 @@ func (c *Client) connect(addr string) bool {
 	ch.Confirm(false)
 
 	// durable true?
-	_, err = ch.QueueDeclare(c.Queue, false, false, false, false, nil)
+	_, err = ch.QueueDeclare(c.Queue, true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("rabbitMQ PUSH 대기열 선언 실패: %v", err)
 		return false
@@ -168,10 +168,10 @@ func (c *Client) Stream(cancelCtx context.Context, db *gorm.DB) error {
 
 	for i := 1; i <= c.threads; i++ {
 		msgs, err := c.channel.Consume(
-			c.Queue,
-			"",
-			true,
-			false,
+			c.Queue, // queue
+			crawlerConsumer(i),
+			false, // auto-act
+			false, // exclusive
 			false,
 			false,
 			nil,
@@ -179,6 +179,7 @@ func (c *Client) Stream(cancelCtx context.Context, db *gorm.DB) error {
 		if err != nil {
 			return err
 		}
+
 		go func() {
 			defer c.wg.Done()
 			for {
@@ -186,11 +187,15 @@ func (c *Client) Stream(cancelCtx context.Context, db *gorm.DB) error {
 				case <-cancelCtx.Done():
 					return
 				case msg, ok := <-msgs:
+					// fmt.Println(string(msg.Body))
 					if !ok {
 						connectionDropped = true
 						return
 					}
 					c.crawlerEvent(msg, db)
+					if err := msg.Ack(false); err != nil {
+						log.Printf("Error msg : %s", err)
+					}
 				}
 			}
 		}()
@@ -204,9 +209,8 @@ func (c *Client) Stream(cancelCtx context.Context, db *gorm.DB) error {
 
 func (c *Client) crawlerEvent(msg amqp.Delivery, db *gorm.DB) {
 	yt.Run(db, string(msg.Body))
-	// fmt.Println("소비됌")
 }
 
-// func consumerName(i int) string {
-// 	return fmt.Sprintf("crawler-%v", i)
-// }
+func crawlerConsumer(i int) string {
+	return fmt.Sprintf("crawler-%v", i)
+}
